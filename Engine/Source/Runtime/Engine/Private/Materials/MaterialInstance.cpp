@@ -2732,6 +2732,7 @@ void UMaterialInstance::UpdateOverridableBaseProperties()
 		BlendMode = BLEND_Opaque;
 		ShadingModels = MSM_DefaultLit;
 		TwoSided = 0;
+		OnlyBackFace = 0;
 		DitheredLODTransition = 0;
 		bIsShadingModelFromMaterialExpression = 0;
 		return;
@@ -2807,6 +2808,17 @@ void UMaterialInstance::UpdateOverridableBaseProperties()
 		TwoSided = Parent->IsTwoSided();
 		BasePropertyOverrides.TwoSided = TwoSided;
 	}
+
+	if (BasePropertyOverrides.bOverride_OnlyBackFace)
+	{
+		OnlyBackFace = BasePropertyOverrides.OnlyBackFace != 0;
+	}
+	else
+	{
+		OnlyBackFace = Parent->IsOnlyBackFace();
+		BasePropertyOverrides.OnlyBackFace = OnlyBackFace;
+	}
+
 
 	if (BasePropertyOverrides.bOverride_DitheredLODTransition)
 	{
@@ -4485,6 +4497,11 @@ bool UMaterialInstance::IsShadingModelFromMaterialExpression() const
 bool UMaterialInstance::IsTwoSided() const
 {
 	return TwoSided;
+}
+
+bool UMaterialInstance::IsOnlyBackFace() const
+{
+	return OnlyBackFace;
 }
 
 bool UMaterialInstance::IsDitheredLODTransition() const

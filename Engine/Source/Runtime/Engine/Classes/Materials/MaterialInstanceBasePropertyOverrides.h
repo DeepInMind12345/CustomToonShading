@@ -37,9 +37,15 @@ struct ENGINE_API FMaterialInstanceBasePropertyOverrides
 	UPROPERTY(EditAnywhere, Category = Material)
 	uint8 bOverride_TwoSided : 1;
 
+	UPROPERTY(EditAnywhere, Category = Material)
+	uint8 bOverride_OnlyBackFace : 1;
+
 	/** Indicates that the material should be rendered without backface culling and the normal should be flipped for backfaces. */
 	UPROPERTY(EditAnywhere, Category = Material, meta = (editcondition = "bOverride_TwoSided"))
 	uint8 TwoSided : 1;
+
+	UPROPERTY(EditAnywhere, Category = Material, meta = (editcondition = "bOverride_OnlyBackFace"))
+	uint8 OnlyBackFace : 1;
 
 	/** Whether the material should support a dithered LOD transition when used with the foliage system. */
 	UPROPERTY(EditAnywhere, Category = Material, meta = (editcondition = "bOverride_DitheredLODTransition"))

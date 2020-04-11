@@ -344,6 +344,7 @@ class ENGINE_VTABLE UMaterialInstance : public UMaterialInterface
 	uint8 bOverrideSubsurfaceProfile:1;
 
 	uint8 TwoSided : 1;
+	uint8 OnlyBackFace : 1;
 	uint8 DitheredLODTransition : 1;
 	uint8 bCastDynamicShadowAsMasked : 1;
 	uint8 bIsShadingModelFromMaterialExpression : 1;
@@ -510,7 +511,8 @@ public:
 	ENGINE_API virtual EBlendMode GetBlendMode() const override;
 	ENGINE_API virtual FMaterialShadingModelField GetShadingModels() const override;
 	ENGINE_API virtual bool IsShadingModelFromMaterialExpression() const override;
-	ENGINE_API virtual bool IsTwoSided() const override;
+	ENGINE_API virtual bool IsTwoSided() const override; 
+	ENGINE_API virtual bool IsOnlyBackFace() const override;
 	ENGINE_API virtual bool IsDitheredLODTransition() const override;
 	ENGINE_API virtual bool IsMasked() const override;
 	
