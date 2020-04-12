@@ -375,6 +375,131 @@ void ApplyPixelDepthOffsetForMobileBasePass(inout FMaterialPixelParameters Mater
     float PixelDepthOffset = ApplyPixelDepthOffsetToMaterialParameters(MaterialParameters, PixelMaterialInputs, OutDepth);
 }
 
+
+float D_GGXMy(float a2, float NoH)
+{
+	float d = (NoH * a2 - NoH) * NoH + 1;
+	return a2 / (3.14159 * d * d);
+}
+
+float sigmoid(float x, float center, float sharp)
+{
+	float s;
+	s = 1 / (1 + pow(100000, (-3 * sharp * (x - center))));
+	return s;
+}
+
+float ndc2Normal(float x)
+{
+	return x * 0.5 + 0.5;
+}
+
+float Normal2ndc(float x)
+{
+	return x * 2.0 - 1.0;
+}
+
+float warp(float x, float w)
+{
+	return (x + w) / (1 + w);
+}
+
+float3 warp(float3 x, float3 w)
+{
+	return (x + w) / (1 + w);
+}
+
+float3 Fresnel_schlick(float VoN, float3 rF0)
+{
+	return rF0 + (1 - rF0) * Pow5(1 - VoN);
+}
+
+float3 Fresnel_extend(float VoN, float3 rF0)
+{
+	return rF0 + (1 - rF0) * Pow3(1 - VoN);
+}
+
+void CalculateToonColor
+(
+	float3 N,
+	float3 V,
+	float3 L,
+	float3 LightColor,
+	float atten,
+
+	float3 diffColor,
+
+	float Roughness,
+	float _ShadowAttWeight,
+
+	float3 _FresnelColor,
+
+	float _DividSharpness,
+	float _DividLineSpec,
+	float specIntensity,
+
+	float _DividLineM,
+	float _DividLineD,
+	float _diffuseBright,
+	float _AO,
+	float3 _DarkFaceColor,
+	float3 _DeepDarkColor,
+
+	inout float3 Color
+	)
+{
+	
+	float3 H = normalize(V + L);
+	half NoL = dot(N, L);
+	half NoH = dot(N, H);
+	half NoV = dot(N, V);
+	half VoL = dot(V, L);
+	half VoH = dot(V, H);
+	half roughness = clamp(Roughness, 0.05, 0.95);
+	
+	half _BoundSharp = 9.5 * Pow2(roughness - 1) + 0.5;
+	
+	//----------------------------------------------------
+	// fresnel
+	//----------------------------------------------------
+	half3 fresnel = Fresnel_extend(NoV, float3(0.1, 0.1, 0.1));
+	half3 fresnelResult = _FresnelColor * fresnel * (1 - VoL) / 2;
+
+	//--------------------------------------------
+	// Specular
+	//--------------------------------------------
+	half NDF0 = D_GGXMy(roughness * roughness, 1);
+	half NDF_HBound = NDF0 * _DividLineSpec;
+
+	half NDF = D_GGXMy(roughness * roughness, saturate(NoH)) + _ShadowAttWeight* (atten - 1);
+	half specularWin = sigmoid(NDF, NDF_HBound, _BoundSharp * _DividSharpness);
+
+	half SpecWeight = specularWin * (NDF0 + NDF_HBound) / 2 * specIntensity; //optional 
+
+	//----------------------------------------------------
+	// diffuse
+	//--------------------------------------------
+	half Lambert = NoL + _AO + _ShadowAttWeight * (atten - 1);
+
+	half MidSig = sigmoid(Lambert, _DividLineM, _BoundSharp * _DividSharpness);
+	half DarkSig = sigmoid(Lambert, _DividLineD, _BoundSharp * _DividSharpness);
+
+	half MidLWin = MidSig;
+	half MidDWin = DarkSig - MidSig;
+	half DarkWin = 1 - DarkSig;
+
+	half3 diffuseWeight = (MidLWin * (1 + ndc2Normal(_DividLineM)) / 2).xxx;
+	diffuseWeight += (MidDWin * (ndc2Normal(_DividLineM) + ndc2Normal(_DividLineD)) / 2).xxx * _DarkFaceColor.rgb * 3 / (_DarkFaceColor.r + _DarkFaceColor.g + _DarkFaceColor.b);
+	diffuseWeight += (DarkWin * (ndc2Normal(_DividLineD))).xxx * _DeepDarkColor.rgb * 3 / (_DeepDarkColor.r + _DeepDarkColor.g + _DeepDarkColor.b);
+	diffuseWeight = warp(diffuseWeight, _diffuseBright.xxx);
+
+	half3 lightResult = SpecWeight * LightColor.rgb + (1 - SpecWeight) * diffuseWeight * diffColor.rgb + fresnelResult;
+	Color = lightResult;
+
+}
+
+
+
 void Main( 
 	FVertexFactoryInterpolantsVSToPS Interpolants
 	, FMobileBasePassInterpolantsVSToPS BasePassInterpolants
@@ -605,17 +730,59 @@ void Main(
 			}
 		}
 		#endif /* DIRECTIONAL_LIGHT_CSM */
+	
 
 		float NoL = max(0, dot(float3(MaterialParameters.WorldNormal), float3(MobileDirectionalLight.DirectionalLightDirectionAndShadowTransition.xyz)));
 		float RoL = max(0, dot(float3(MaterialParameters.ReflectionVector), float3(MobileDirectionalLight.DirectionalLightDirectionAndShadowTransition.xyz)));
 		float3 H = normalize(float3(MaterialParameters.CameraVector) + float3(MobileDirectionalLight.DirectionalLightDirectionAndShadowTransition.xyz));
 		float NoH = max(0,dot(MaterialParameters.WorldNormal, H));
+	
+	#if MATERIAL_SHADINGMODEL_TOON
+		float3 CustomVector0 = PixelMaterialInputs.CustomVector0;
+		float3 CustomVector1 = PixelMaterialInputs.CustomVector1;
+		float3 CustomVector2 = PixelMaterialInputs.CustomVector2;
+		CalculateToonColor(
+			MaterialParameters.WorldNormal,//N
+			MaterialParameters.CameraVector,//V
+			float3(MobileDirectionalLight.DirectionalLightDirectionAndShadowTransition.xyz),//L
+	
+			MobileDirectionalLight.DirectionalLightColor.rgb,//LightColor
+			Shadow,//Atten
+	
+			GetMaterialBaseColor(PixelMaterialInputs),//diffusecolor
 
+			GetMaterialRoughness(PixelMaterialInputs),
+			GetMaterialCustomData0(MaterialParameters),//ShadowAttWeight
+			
+			GetMaterialSubsurfaceData(PixelMaterialInputs).rgb,//FresnelColor * Intensity
+			
+			CustomVector0.x,//DivideShareness
+			CustomVector0.y,//DivideLineSpec
+			CustomVector0.z,//SpecIntensity,
+	
+			CustomVector1.x,//DivideLineM
+			CustomVector1.y,//DividelineD,
+			CustomVector1.z,//DiffuseBright
+			GetMaterialAmbientOcclusion(PixelMaterialInputs),//AOWeight * s.AO
+			CustomVector2,//DarkFaceColor
+			float3(0.15, 0.15, 0.15),//DeepDarkColor
+	
+			Color
+		);
+	
+		OutColor.rgb = Color;
+		OutColor.a = 1.0;
+		return;
+	#endif
+
+
+	
 		#if FULLY_ROUGH
 			Color += (Shadow * NoL) * MobileDirectionalLight.DirectionalLightColor.rgb * DiffuseColor;
 		#else
 			// MobileDirectionalLight.DirectionalLightDistanceFadeMADAndSpecularScale.z saves SpecularScale for direction light.
-			Color += (Shadow * NoL) * MobileDirectionalLight.DirectionalLightColor.rgb * (DiffuseColor + SpecularColor * MobileDirectionalLight.DirectionalLightDistanceFadeMADAndSpecularScale.z * CalcSpecular(Roughness, RoL, NoH, H, MaterialParameters.WorldNormal));
+			//====USE Mine Diffuse=======Color += (Shadow * NoL) * MobileDirectionalLight.DirectionalLightColor.rgb * (DiffuseColor + SpecularColor * MobileDirectionalLight.DirectionalLightDistanceFadeMADAndSpecularScale.z * CalcSpecular(Roughness, RoL, NoH, H, MaterialParameters.WorldNormal));
+			Color += (Shadow * NoL) * MobileDirectionalLight.DirectionalLightColor.rgb * (SpecularColor * MobileDirectionalLight.DirectionalLightDistanceFadeMADAndSpecularScale.z * CalcSpecular(Roughness, RoL, NoH, H, MaterialParameters.WorldNormal));		
 			// Environment map has been prenormalized, scale by lightmap luminance
 			half3 SpecularIBL = GetImageBasedReflectionLighting(MaterialParameters, Roughness, IndirectIrradiance);
 

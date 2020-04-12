@@ -66,6 +66,9 @@ void UMaterialGraph::RebuildGraph()
 		MaterialInputs.Add(FMaterialInputInfo(LOCTEXT("MaterialAttributes", "Material Attributes"), MP_MaterialAttributes, LOCTEXT( "MaterialAttributesToolTip", "Material Attributes" ) ));
 		
 		MaterialInputs.Add(FMaterialInputInfo(GetCustomVector0PinName(), MP_CustomVector0, GetCustomVector0PinName()));
+		MaterialInputs.Add(FMaterialInputInfo(GetCustomVector1PinName(), MP_CustomVector1, GetCustomVector1PinName()));
+		MaterialInputs.Add(FMaterialInputInfo(GetCustomVector2PinName(), MP_CustomVector2, GetCustomVector2PinName()));
+
 		// Add Root Node
 		FGraphNodeCreator<UMaterialGraphNode_Root> NodeCreator(*this);
 		RootNode = NodeCreator.CreateNode();
@@ -595,5 +598,16 @@ FText UMaterialGraph::GetCustomVector0PinName() const
 	return FText::FromString(GetPinNameFromShadingModelField(Material->GetShadingModels(), CustomPinNames, "Custom Vector0"));
 }
 
+FText UMaterialGraph::GetCustomVector1PinName() const
+{
+	TArray<TKeyValuePair<EMaterialShadingModel, FString>> CustomPinNames({ {MSM_Toon, "Custom Vector1"} });
+	return FText::FromString(GetPinNameFromShadingModelField(Material->GetShadingModels(), CustomPinNames, "Custom Vector1"));
+}
+
+FText UMaterialGraph::GetCustomVector2PinName() const
+{
+	TArray<TKeyValuePair<EMaterialShadingModel, FString>> CustomPinNames({ {MSM_Toon, "Custom Vector2"} });
+	return FText::FromString(GetPinNameFromShadingModelField(Material->GetShadingModels(), CustomPinNames, "Custom Vector2"));
+}
 
 #undef LOCTEXT_NAMESPACE

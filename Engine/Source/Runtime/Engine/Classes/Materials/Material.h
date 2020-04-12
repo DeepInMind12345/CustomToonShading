@@ -466,6 +466,10 @@ public:
 
 	UPROPERTY()
 	FVectorMaterialInput CustomVector0;
+	UPROPERTY()
+	FVectorMaterialInput CustomVector1;
+	UPROPERTY()
+	FVectorMaterialInput CustomVector2;
 #endif
 
 	/**

@@ -181,6 +181,8 @@ enum EMaterialProperty
 	MP_MaterialAttributes UMETA(Hidden),
 	MP_CustomOutput UMETA(Hidden),
 	MP_CustomVector0 UMETA(Hidden),
+	MP_CustomVector1 UMETA(Hidden),
+	MP_CustomVector2 UMETA(Hidden),
 	MP_MAX UMETA(DisplayName = "None"),
 };
 

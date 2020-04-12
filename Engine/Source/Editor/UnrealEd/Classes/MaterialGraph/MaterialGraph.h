@@ -197,4 +197,6 @@ private:
 	FText GetSubsurfacePinName() const;
 	FText GetCustomDataPinName( uint32 Index ) const;
 	FText GetCustomVector0PinName() const;
+	FText GetCustomVector1PinName() const;
+	FText GetCustomVector2PinName() const;
 };

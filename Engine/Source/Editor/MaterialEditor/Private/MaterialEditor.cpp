@@ -3306,6 +3306,8 @@ UClass* FMaterialEditor::GetOnPromoteToParameterClass(UEdGraphPin* TargetPin)
 			case MP_SubsurfaceColor:
 			case MP_SpecularColor:
 			case MP_CustomVector0:
+			case MP_CustomVector1:
+			case MP_CustomVector2:
 			case MP_Normal:	return UMaterialExpressionVectorParameter::StaticClass();
 		}
 	}

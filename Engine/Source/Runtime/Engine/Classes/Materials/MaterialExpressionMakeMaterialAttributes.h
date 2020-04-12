@@ -73,6 +73,10 @@ class UMaterialExpressionMakeMaterialAttributes : public UMaterialExpression
 
 	UPROPERTY()
 	FExpressionInput CustomVector0;
+	UPROPERTY()
+	FExpressionInput CustomVector1;
+	UPROPERTY()
+	FExpressionInput CustomVector2;
 
 	//~ Begin UObject Interface
 	virtual void Serialize(FStructuredArchive::FRecord Record) override;

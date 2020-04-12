@@ -5365,7 +5365,7 @@ int32 UMaterialExpressionMakeMaterialAttributes::Compile(class FMaterialCompiler
 	int32 Ret = INDEX_NONE;
 	UMaterialExpression* Expression = nullptr;
 
- 	static_assert(MP_MAX == 31, 
+ 	static_assert(MP_MAX == 33, 
 		"New material properties should be added to the end of the inputs for this expression. \
 		The order of properties here should match the material results pins, the make material attriubtes node inputs and the mapping of IO indices to properties in GetMaterialPropertyFromInputOutputIndex().\
 		Insertions into the middle of the properties or a change in the order of properties will also require that existing data is fixed up in DoMaterialAttriubtesReorder().\
@@ -5394,6 +5394,8 @@ int32 UMaterialExpressionMakeMaterialAttributes::Compile(class FMaterialCompiler
 	case MP_PixelDepthOffset: Ret = PixelDepthOffset.Compile(Compiler); Expression = PixelDepthOffset.Expression; break;
 	case MP_ShadingModel: Ret = ShadingModel.Compile(Compiler); Expression = ShadingModel.Expression; break;
 	case MP_CustomVector0: Ret = CustomVector0.Compile(Compiler); Expression = CustomVector0.Expression; break;
+	case MP_CustomVector1: Ret = CustomVector1.Compile(Compiler); Expression = CustomVector1.Expression; break;
+	case MP_CustomVector2: Ret = CustomVector2.Compile(Compiler); Expression = CustomVector2.Expression; break;
 	};
 
 	if (Property >= MP_CustomizedUVs0 && Property <= MP_CustomizedUVs7)
@@ -5451,7 +5453,7 @@ UMaterialExpressionBreakMaterialAttributes::UMaterialExpressionBreakMaterialAttr
 
 	MenuCategories.Add(ConstructorStatics.NAME_MaterialAttributes);
 	
- 	static_assert(MP_MAX == 31, 
+ 	static_assert(MP_MAX == 33, 
 		"New material properties should be added to the end of the outputs for this expression. \
 		The order of properties here should match the material results pins, the make material attriubtes node inputs and the mapping of IO indices to properties in GetMaterialPropertyFromInputOutputIndex().\
 		Insertions into the middle of the properties or a change in the order of properties will also require that existing data is fixed up in DoMaterialAttriubtesReorder().\
@@ -5483,6 +5485,8 @@ UMaterialExpressionBreakMaterialAttributes::UMaterialExpressionBreakMaterialAttr
 	Outputs.Add(FExpressionOutput(TEXT("PixelDepthOffset"), 1, 1, 0, 0, 0));
 	Outputs.Add(FExpressionOutput(TEXT("ShadingModel"), 0, 0, 0, 0, 0));
 	Outputs.Add(FExpressionOutput(TEXT("CustomVector0"), 1, 1, 1, 1, 1));
+	Outputs.Add(FExpressionOutput(TEXT("CustomVector1"), 1, 1, 1, 1, 1));
+	Outputs.Add(FExpressionOutput(TEXT("CustomVector2"), 1, 1, 1, 1, 1));
 #endif
 }
 
@@ -5516,6 +5520,8 @@ void UMaterialExpressionBreakMaterialAttributes::Serialize(FStructuredArchive::F
 		Outputs[OutputIndex].SetMask(1, 1, 0, 0, 0); ++OutputIndex; // AmbientOcclusion
 		Outputs[OutputIndex].SetMask(1, 1, 1, 0, 0); ++OutputIndex; // Refraction
 		Outputs[OutputIndex].SetMask(1, 1, 1, 1, 1); ++OutputIndex; // CustomVector0
+		Outputs[OutputIndex].SetMask(1, 1, 1, 1, 1); ++OutputIndex; // CustomVector1
+		Outputs[OutputIndex].SetMask(1, 1, 1, 1, 1); ++OutputIndex; // CustomVector2
 		
 		for (int32 i = 0; i <= MP_CustomizedUVs7 - MP_CustomizedUVs0; ++i, ++OutputIndex)
 		{
@@ -5562,6 +5568,8 @@ static void BuildPropertyToIOIndexMap()
 		PropertyToIOIndexMap.Add(MP_PixelDepthOffset, 24);
 		PropertyToIOIndexMap.Add(MP_ShadingModel, 25);
 		PropertyToIOIndexMap.Add(MP_CustomVector0, 26);
+		PropertyToIOIndexMap.Add(MP_CustomVector0, 27);
+		PropertyToIOIndexMap.Add(MP_CustomVector0, 28);
 	}
 }
 
