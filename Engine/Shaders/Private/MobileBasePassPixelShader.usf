@@ -810,8 +810,9 @@ void Main(
 			OutColor = half4(HdrMosaic(OutColor.rgb,  SvPosition.xy), OutColor.a);
 		}
 	#endif
+	//OutColor.rgb = PixelMaterialInputs.CustomVector0.xyw;//-half3(1, 1, 1);
 	#if OUTPUT_GAMMA_SPACE
-		OutColor.rgb = sqrt(OutColor.rgb);
+		OutColor.rgb = sqrt(OutColor.rgb);  
 	#endif
 #endif
 }
