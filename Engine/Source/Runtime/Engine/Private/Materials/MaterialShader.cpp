@@ -1807,9 +1807,12 @@ bool FMaterialShaderMap::ProcessCompilationResults(const TArray<FShaderCommonCom
 							for (int32 Index = 0; Index < StageTypes.Num(); ++Index)
 							{
 								FMeshMaterialShaderType* ShaderType = ((FMeshMaterialShaderType*)(StageTypes[Index]))->GetMeshMaterialShaderType();
-								FShader* Shader = MeshShaderMap->GetShader(ShaderType, kUniqueShaderPermutationId);
-								check(Shader);
-								ShaderStages.Add(Shader);
+								if (ShaderType != NULL)
+								{
+									FShader* Shader = MeshShaderMap->GetShader(ShaderType, kUniqueShaderPermutationId);
+									check(Shader);
+									ShaderStages.Add(Shader);
+								}
 							}
 
 							checkf(StageTypes.Num() == ShaderStages.Num(), TEXT("Internal Error adding MeshMaterial ShaderPipeline %s"), ShaderPipelineType->GetName());
